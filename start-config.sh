@@ -130,3 +130,6 @@ fi
 	iptables -P INPUT   DROP
 	iptables -P FORWARD DROP
 	iptables -P OUTPUT  DROP
+
+#Restart OS
+reboot
