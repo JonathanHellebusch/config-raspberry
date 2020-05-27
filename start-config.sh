@@ -99,3 +99,34 @@ fi
 
 	echo "Neustart des SSH-Service"
 	systemctl restart ssh
+
+#Firewall
+	#ICMP-Pakete werden verworfen
+	echo "ICMP-Pakete werden verworfen"
+	iptables -A INPUT -s 127.0.0.1 -p icmp -j DROP
+
+	#Zugriff auf Webserver und Freigaben aus lokalen Netz erlaubt
+	echo "Zugriff auf Webserver und Freigaben aus lokalen Netz erlaubt"
+	iptables -A INPUT  -p tcp -m multiport --dports 21,80,443 -m state --state NEW,ESTABLISHED -s 192.168.24.0/24 -j ACCEPT
+	iptables -A OUTPUT -p tcp -m multiport --sports 21,80,443 -m state --state ESTABLISHED -s 192.168.24.0/24 -j ACCEPT
+	iptables -A INPUT  -p tcp -m multiport --dports 21,80,443 -m state --state NEW,ESTABLISHED -s  127.0.0.0/8 -j ACCEPT
+	iptables -A OUTPUT -p tcp -m multiport --sports 21,80,443 -m state --state ESTABLISHED -s 127.0.0.0/8 -j ACCEPT
+	iptables -A INPUT -p tcp --dport 80 -j DROP
+
+	#Zugriff auf SSH aus allen Netzwerken erlaubt
+	echo "Zugriff auf SSH aus allen Netzwerken erlaubt"
+	iptables -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+	iptables -A OUTPUT -p tcp --sport 22 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+
+	#Zugriff vom Linux-Server auf DNS-Server erlaubt
+	echo "Zugriff vom Linux-Server auf DNS-Server erlaubt"
+	iptables -A OUTPUT -p udp -d 8.8.8.8 --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT
+	iptables -A INPUT  -p udp -s 8.8.8.8 --sport 53 -m state --state ESTABLISHED     -j ACCEPT
+	iptables -A OUTPUT -p tcp -d 8.8.8.8 --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT
+	iptables -A INPUT  -p tcp -s 8.8.8.8 --sport 53 -m state --state ESTABLISHED     -j ACCEPT
+
+	#Alle anderen ankommenden Pakete werden verworfen
+	echo "Alle anderen ankommenden Pakete werden verworfen"
+	iptables -P INPUT   DROP
+	iptables -P FORWARD DROP
+	iptables -P OUTPUT  DROP
