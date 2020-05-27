@@ -74,3 +74,12 @@ fi
 	#Restart Samba
 	echo "Neustart des Samba-Service"
 	systemctl restart smbd
+
+#Benutzer
+	#Add User benutzer
+	echo "Anlegen des Benutzers 'benutzer' mit dem Passwort 'raspberry'"
+	useradd benutzer -p raspberry -g users
+	
+	#Add User fernzugriff
+	echo "Anlegen des Benutzers 'fernzugriff' mit dem Passwort 'raspberry' und sudo-Recht"
+	useradd fernzugriff -p raspberry -G sudo
