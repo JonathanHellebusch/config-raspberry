@@ -21,7 +21,7 @@ fi
 
 	#Restart Service
 	echo "DHCPCD neustart"
-	service dhcpcd restart
+	systemctl restart dhcpcd
 
 #Webserver
 	# Install Apache
@@ -36,3 +36,41 @@ fi
 	#Copy index.html
 	echo "Homepage durch eigene Homepage ersetzen"
 	\cp ./index.html /var/www/html
+
+#Samba
+	# Install Apache
+	dpkg -s samba &> /dev/null
+	if [ $? -eq 0 ]; then
+		echo "Samba ist schon installiert!"
+	else
+		echo "Samba wird installiert"
+		apt install samba -y
+	fi
+
+	#Configure Samba
+	echo "Konfigurieren der Freigaben readonlyuser und readwriteuser"
+	echo "
+	[readonlyuser]
+	comment = Readonly User
+	path = /pi/samba/share
+	browsable = yes
+	guest ok = yes
+	read only = yes
+	create mask = 0444
+
+	[readwriteuser]
+	comment = Readonly User
+	path = /pi/samba/share
+	browsable = yes
+	guest ok = no
+	read only = no
+	create mask = 0666
+	" >> /etc/samba/smb.conf
+
+	#Test Configuration
+	echo "Test der Konfigurationsdatei"
+	testparm /etc/samba/smb.conf -s
+
+	#Restart Samba
+	echo "Neustart des Samba-Service"
+	systemctl restart smbd
