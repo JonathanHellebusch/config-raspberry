@@ -83,3 +83,19 @@ fi
 	#Add User fernzugriff
 	echo "Anlegen des Benutzers 'fernzugriff' mit dem Passwort 'raspberry' und sudo-Recht"
 	useradd fernzugriff -p raspberry -G sudo
+
+#SSH
+	# Install OpenSSH-Server
+	dpkg -s samba &> /dev/null
+	if [ $? -eq 0 ]; then
+		echo "OpenSSH-Server ist schon installiert!"
+	else
+		echo "OpenSSH-Server wird installiert"
+		apt install openssh-server -y
+	fi
+
+	echo "Benutzer 'fernzugriff' als einzigem den SSH-Zugang gewähren"
+	echo "AllowUsers fernzugriff" >> /etc/ssh/sshd_config
+
+	echo "Neustart des SSH-Service"
+	systemctl restart ssh
