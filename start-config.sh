@@ -1,12 +1,16 @@
 #!/bin/bash
-
+#Konfiguration-Raspberry
 # Check sudo rights
 if [[ $EUID -ne 0 ]]; then
    echo "Dieses Script muss als root ausgefuert werden!" 1>&2
    exit 1
 fi
 
-#Netzwerkkonfiguration 
+#update/upgrade
+apt update
+apt upgrade
+
+#Netzwerkkonfiguration
 	# Static IP config
 	echo "Alle voreingestellten Interfaces werden entfernt"
 	sed -i "/interface eth/d;/interface wlan/d;/static ip_address/d;/static routers/d;/static domain_name_servers/d;" /etc/dhcpcd.conf
@@ -35,7 +39,7 @@ fi
 
 	#Copy index.html
 	echo "Homepage durch eigene Homepage ersetzen"
-	\cp ./index.html /var/www/html
+	find -maxdepth 4 -iname 'index.html' -exec cp {} /var/www/html/ \;
 
 #Samba
 	# Install Apache
@@ -79,14 +83,14 @@ fi
 	#Add User benutzer
 	echo "Anlegen des Benutzers 'benutzer' mit dem Passwort 'raspberry'"
 	useradd benutzer -p raspberry -g users
-	
+
 	#Add User fernzugriff
 	echo "Anlegen des Benutzers 'fernzugriff' mit dem Passwort 'raspberry' und sudo-Recht"
 	useradd fernzugriff -p raspberry -G sudo
 
 #SSH
 	# Install OpenSSH-Server
-	dpkg -s samba &> /dev/null
+	dpkg -s openssh-server &> /dev/null
 	if [ $? -eq 0 ]; then
 		echo "OpenSSH-Server ist schon installiert!"
 	else
