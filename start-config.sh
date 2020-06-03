@@ -6,17 +6,25 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-#update/upgrade
-apt update
-apt upgrade
-
-
 wait_for_key()
 {
 	printf "\n"
 	read -p "Drücke die AnyKey-Taste ..." -n1 -s
 	printf "\n\n"
 }
+
+#update/upgrade
+apt update -y
+apt upgrade -y
+
+if [ $? -eq 0 ]; then
+	echo "Das Betriebssystem ist auf dem neusten Stand!"
+else
+	echo "Die Konfiguration muss nach einem Reboot erneut gestartet wereden"
+	wait_for_key
+	reboot
+	exit 0
+fi
 
 wait_for_key
 
@@ -56,6 +64,14 @@ wait_for_key
 wait_for_key
 
 #Samba
+	# Install dhcp-client
+	dpkg -s dhcp-client &> /dev/null
+	if [ $? -eq 0 ]; then
+		echo "dhcp-client ist schon installiert!"
+	else
+		echo "dhcp-client wird installiert"
+		apt install dhcp-client -y
+	fi
 	# Install Apache
 	dpkg -s samba &> /dev/null
 	if [ $? -eq 0 ]; then
@@ -99,12 +115,12 @@ wait_for_key
 	#Add User benutzer
 	echo "Anlegen des Benutzers 'benutzer' mit dem Passwort 'raspberry'"
 	useradd benutzer -g users
-	passwd benutzer raspberry
+	echo -e "benutzer:raspberry" | chpasswd
 
 	#Add User fernzugriff
 	echo "Anlegen des Benutzers 'fernzugriff' mit dem Passwort 'raspberry' und sudo-Recht"
 	useradd fernzugriff -G sudo
-	passwd fernzugriff raspberry
+	echo -e "fernzugriff:raspberry" | chpasswd
 
 wait_for_key
 
@@ -127,6 +143,12 @@ wait_for_key
 wait_for_key
 
 #Firewall
+
+	#set iptables version to legacy
+	echo "Iptables Version ändern"
+	update-alternatives --set iptables /usr/sbin/iptables-legacy
+	update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+
 	#ICMP-Pakete werden verworfen
 	echo "ICMP-Pakete werden verworfen"
 	iptables -A INPUT -s 127.0.0.1 -p icmp -j DROP
@@ -157,7 +179,7 @@ wait_for_key
 	iptables -P FORWARD DROP
 	iptables -P OUTPUT  DROP
 
-echo "Anschließend wird das Betriebssystem neu gestartet"
+echo -e "\n\nAnschließend wird das Betriebssystem neu gestartet"
 wait_for_key
 
 #Restart OS
