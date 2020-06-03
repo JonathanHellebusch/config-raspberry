@@ -10,6 +10,16 @@ fi
 apt update
 apt upgrade
 
+
+wait_for_key()
+{
+	printf "\n"
+	read -p "Drücke die AnyKey-Taste ..." -n1 -s
+	printf "\n\n"
+}
+
+wait_for_key
+
 #Netzwerkkonfiguration
 	# Static IP config
 	echo "Alle voreingestellten Interfaces werden entfernt"
@@ -27,6 +37,8 @@ apt upgrade
 	echo "DHCPCD neustart"
 	systemctl restart dhcpcd
 
+wait_for_key
+
 #Webserver
 	# Install Apache
 	dpkg -s apache2 &> /dev/null
@@ -40,6 +52,8 @@ apt upgrade
 	#Copy index.html
 	echo "Homepage durch eigene Homepage ersetzen"
 	find -maxdepth 4 -iname 'index.html' -exec cp {} /var/www/html/ \;
+
+wait_for_key
 
 #Samba
 	# Install Apache
@@ -79,14 +93,20 @@ apt upgrade
 	echo "Neustart des Samba-Service"
 	systemctl restart smbd
 
+wait_for_key
+
 #Benutzer
 	#Add User benutzer
 	echo "Anlegen des Benutzers 'benutzer' mit dem Passwort 'raspberry'"
-	useradd benutzer -p raspberry -g users
+	useradd benutzer -g users
+	passwd benutzer raspberry
 
 	#Add User fernzugriff
 	echo "Anlegen des Benutzers 'fernzugriff' mit dem Passwort 'raspberry' und sudo-Recht"
-	useradd fernzugriff -p raspberry -G sudo
+	useradd fernzugriff -G sudo
+	passwd fernzugriff raspberry
+
+wait_for_key
 
 #SSH
 	# Install OpenSSH-Server
@@ -103,6 +123,8 @@ apt upgrade
 
 	echo "Neustart des SSH-Service"
 	systemctl restart ssh
+
+wait_for_key
 
 #Firewall
 	#ICMP-Pakete werden verworfen
@@ -134,6 +156,9 @@ apt upgrade
 	iptables -P INPUT   DROP
 	iptables -P FORWARD DROP
 	iptables -P OUTPUT  DROP
+
+echo "Anschließend wird das Betriebssystem neu gestartet"
+wait_for_key
 
 #Restart OS
 reboot
